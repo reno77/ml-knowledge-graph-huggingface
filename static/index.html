@@ -448,8 +448,18 @@ fetch('graph.json').then(r => r.json()).then(data => {
     row.className = 'org-row';
     row.innerHTML = `<span class="org-name">${org.label}</span><span class="org-count">${orgCounts[org.id]||0}</span>`;
     row.addEventListener('click', () => {
-      if (state.hiddenOrgs.has(org.id)) { state.hiddenOrgs.delete(org.id); row.classList.remove('disabled'); }
-      else { state.hiddenOrgs.add(org.id); row.classList.add('disabled'); }
+      const allHiddenExceptThis = orgNodes.every(o => o.id === org.id || state.hiddenOrgs.has(o.id));
+      if (allHiddenExceptThis && !state.hiddenOrgs.has(org.id)) {
+        // Already isolated — restore all
+        state.hiddenOrgs.clear();
+        orgListEl.querySelectorAll('.org-row').forEach(r => r.classList.remove('disabled'));
+      } else {
+        // Isolate this org — hide all others
+        orgNodes.forEach(o => { if (o.id !== org.id) state.hiddenOrgs.add(o.id); });
+        state.hiddenOrgs.delete(org.id);
+        orgListEl.querySelectorAll('.org-row').forEach(r => r.classList.add('disabled'));
+        row.classList.remove('disabled');
+      }
       refreshGraph();
     });
     orgListEl.appendChild(row);
@@ -462,8 +472,18 @@ fetch('graph.json').then(r => r.json()).then(data => {
     row.className = 'cat-row';
     row.innerHTML = `<div class="cat-dot-label"><span class="cat-dot" style="background:${pipelineColors[cat]}"></span><span class="cat-name">${cat}</span></div><span class="cat-count">${count}</span>`;
     row.addEventListener('click', () => {
-      if (state.hiddenPipelines.has(cat)) { state.hiddenPipelines.delete(cat); row.classList.remove('disabled'); }
-      else { state.hiddenPipelines.add(cat); row.classList.add('disabled'); }
+      const allHiddenExceptThis = sortedPipelines.every(([c]) => c === cat || state.hiddenPipelines.has(c));
+      if (allHiddenExceptThis && !state.hiddenPipelines.has(cat)) {
+        // Already isolated — restore all
+        state.hiddenPipelines.clear();
+        pipeListEl.querySelectorAll('.cat-row').forEach(r => r.classList.remove('disabled'));
+      } else {
+        // Isolate this pipeline — hide all others
+        sortedPipelines.forEach(([c]) => { if (c !== cat) state.hiddenPipelines.add(c); });
+        state.hiddenPipelines.delete(cat);
+        pipeListEl.querySelectorAll('.cat-row').forEach(r => r.classList.add('disabled'));
+        row.classList.remove('disabled');
+      }
       refreshGraph();
     });
     pipeListEl.appendChild(row);
