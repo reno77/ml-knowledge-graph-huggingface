@@ -991,11 +991,11 @@ fetch('graph.json').then(r => r.json()).then(data => {
       const year = getNodeYear(n);
       const h = strHash(n.id);
       if (n.type === 'org') {
-        // Place orgs at the top, spread along X by average model year
-        const models = allNodes.filter(m => m.type === 'model' && m.id.startsWith(n.id + '/'));
-        const avgYr = models.length ? models.reduce((s, m) => s + getNodeYear(m), 0) / models.length : 2024;
+        // Place orgs before their earliest model release
+        const models = allNodes.filter(m => m.type === 'model' && m.id.startsWith(n.id + '/') && m.createdAt);
+        const earliestYr = models.length ? Math.min(...models.map(m => getNodeYear(m))) : 2024;
         const orgIdx = orgList.indexOf(n.id);
-        n.fx = yearToX(avgYr);
+        n.fx = yearToX(earliestYr) - 40;
         n.fy = 300 + (((h & 0xff) / 255) - 0.5) * 80;
         n.fz = (orgIdx - orgList.length/2) * 30;
       } else {
