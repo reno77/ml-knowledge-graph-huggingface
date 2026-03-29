@@ -1089,11 +1089,13 @@ fetch('graph.json').then(r => r.json()).then(data => {
 
     if (mode === 'timeline') {
       pinTimelineNodes();
+      Graph.enableNodeDrag(false);
       refreshGraph();
       showTimelineAxis();
       Graph.d3ReheatSimulation();
     } else {
       unpinNodes();
+      Graph.enableNodeDrag(true);
       hideTimelineAxis();
       refreshGraph();
       Graph.d3ReheatSimulation();
