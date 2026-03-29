@@ -325,6 +325,8 @@
   <div class="ni-stat" id="ni-modified"></div>
   <div class="ni-stat" id="ni-author"></div>
   <div class="ni-stat" id="ni-base"></div>
+  <div id="ni-description" style="font-size:11px;color:#adbac7;line-height:1.5;margin:8px 0;
+       max-height:80px;overflow-y:auto;border-top:1px solid #30363d;padding-top:6px;display:none;"></div>
   <a id="ni-hf-link" class="ni-hf-link" href="#" target="_blank" rel="noopener">View on HuggingFace &#8599;</a>
   <div class="ni-links" id="ni-links"></div>
   <div id="depth-wrap">
@@ -378,6 +380,7 @@ fetch('graph.json').then(r => r.json()).then(data => {
     downloads: n.downloads || 0,
     likes: n.likes || 0,
     createdAt: n.createdAt || '',
+    description: n.description || '',
   }));
   const allLinks = data.edges.map(e => ({ source: e.source, target: e.target, edgeType: e.type }));
 
@@ -756,6 +759,14 @@ fetch('graph.json').then(r => r.json()).then(data => {
 
       hfLink.href = 'https://huggingface.co/' + node.id;
       hfLink.style.display = 'inline-flex';
+
+      const descEl = document.getElementById('ni-description');
+      if (node.description) {
+        descEl.textContent = node.description;
+        descEl.style.display = 'block';
+      } else {
+        descEl.style.display = 'none';
+      }
     } else {
       // Org
       dlEl.textContent = 'Models: ' + (orgCounts[node.id] || 0);
@@ -764,6 +775,7 @@ fetch('graph.json').then(r => r.json()).then(data => {
       modEl.style.display = 'none';
       authEl.style.display = 'none';
       baseEl.style.display = 'none';
+      document.getElementById('ni-description').style.display = 'none';
       hfLink.href = 'https://huggingface.co/' + node.id;
       hfLink.style.display = 'inline-flex';
     }

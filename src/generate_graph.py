@@ -80,6 +80,7 @@ def build_graph(models: list[dict]) -> dict:
             "createdAt": m.get("createdAt", ""),
             "author": m["author"],
             "pipeline_tag": pipeline,
+            "description": m.get("description", ""),
         })
         node_ids.add(model_id)
 
