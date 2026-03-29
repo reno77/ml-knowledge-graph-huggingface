@@ -47,6 +47,8 @@ TARGET_ORGS = [
     "FlagAlpha",            # FlagAlpha — Llama2-Chinese
     "Skywork",              # Skywork (Kunlun Tech)
     "modelscope",           # ModelScope (Alibaba DAMO)
+    "PaddlePaddle",         # PaddlePaddle (Baidu) — PaddleOCR, PaddleNLP
+    "Tongyi-MAI",           # Tongyi (Alibaba) — MAI models
 ]
 
 MAX_MODELS_PER_ORG = 30

@@ -30,7 +30,7 @@
       "val": 7.91,
       "color": "#1a6985",
       "downloads": 81000209,
-      "likes": 25884,
+      "likes": 25885,
       "modelCount": 30
     },
     {
@@ -373,6 +373,28 @@
       "downloads": 184,
       "likes": 40,
       "modelCount": 13
+    },
+    {
+      "id": "PaddlePaddle",
+      "label": "PaddlePaddle",
+      "type": "org",
+      "category": "organization",
+      "val": 6.48,
+      "color": "#1a6985",
+      "downloads": 2992927,
+      "likes": 2389,
+      "modelCount": 30
+    },
+    {
+      "id": "Tongyi-MAI",
+      "label": "Tongyi-MAI",
+      "type": "org",
+      "category": "organization",
+      "val": 5.93,
+      "color": "#1a6985",
+      "downloads": 860321,
+      "likes": 5605,
+      "modelCount": 4
     },
     {
       "id": "meta-llama/Llama-3.1-8B-Instruct",
@@ -1201,7 +1223,7 @@
       "color": "#e6194b",
       "val": 6.83,
       "downloads": 6734875,
-      "likes": 4485,
+      "likes": 4486,
       "lastModified": "",
       "author": "openai",
       "pipeline_tag": "text-generation"
@@ -12034,6 +12056,448 @@
       "lastModified": "",
       "author": "modelscope",
       "pipeline_tag": "text-to-image"
+    },
+    {
+      "id": "PaddlePaddle/UVDoc",
+      "label": "UVDoc",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 5.74,
+      "downloads": 552820,
+      "likes": 8,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv5_server_det",
+      "label": "PP-OCRv5_server_det",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 5.74,
+      "downloads": 544886,
+      "likes": 56,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-LCNet_x1_0_doc_ori",
+      "label": "PP-LCNet_x1_0_doc_ori",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 5.65,
+      "downloads": 445112,
+      "likes": 7,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/en_PP-OCRv5_mobile_rec",
+      "label": "en_PP-OCRv5_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 5.58,
+      "downloads": 382662,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PaddleOCR-VL-1.5",
+      "label": "PaddleOCR-VL-1.5",
+      "type": "model",
+      "category": "image-text-to-text",
+      "color": "#ff8c00",
+      "val": 5.44,
+      "downloads": 273597,
+      "likes": 509,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-text-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-DocLayoutV3_safetensors",
+      "label": "PP-DocLayoutV3_safetensors",
+      "type": "model",
+      "category": "object-detection",
+      "color": "#800000",
+      "val": 5.36,
+      "downloads": 229363,
+      "likes": 20,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "object-detection"
+    },
+    {
+      "id": "PaddlePaddle/PP-LCNet_x1_0_textline_ori",
+      "label": "PP-LCNet_x1_0_textline_ori",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 5.28,
+      "downloads": 190887,
+      "likes": 2,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv5_server_rec",
+      "label": "PP-OCRv5_server_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.86,
+      "downloads": 72302,
+      "likes": 22,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv5_mobile_det",
+      "label": "PP-OCRv5_mobile_det",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.73,
+      "downloads": 53145,
+      "likes": 22,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/latin_PP-OCRv5_mobile_rec",
+      "label": "latin_PP-OCRv5_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.68,
+      "downloads": 47580,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-DocLayoutV3",
+      "label": "PP-DocLayoutV3",
+      "type": "model",
+      "category": "image-segmentation",
+      "color": "#469990",
+      "val": 4.3,
+      "downloads": 19863,
+      "likes": 62,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-segmentation"
+    },
+    {
+      "id": "PaddlePaddle/RT-DETR-L_wired_table_cell_det",
+      "label": "RT-DETR-L_wired_table_cell_det",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.25,
+      "downloads": 17846,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/RT-DETR-L_wireless_table_cell_det",
+      "label": "RT-DETR-L_wireless_table_cell_det",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.25,
+      "downloads": 17808,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv5_mobile_rec",
+      "label": "PP-OCRv5_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.15,
+      "downloads": 14265,
+      "likes": 11,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-DocLayoutV2",
+      "label": "PP-DocLayoutV2",
+      "type": "model",
+      "category": "object-detection",
+      "color": "#800000",
+      "val": 4.14,
+      "downloads": 13811,
+      "likes": 28,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "object-detection"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv4_mobile_det",
+      "label": "PP-OCRv4_mobile_det",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.08,
+      "downloads": 12094,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-DocLayout_plus-L",
+      "label": "PP-DocLayout_plus-L",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.04,
+      "downloads": 11090,
+      "likes": 13,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PaddleOCR-VL-1.5-GGUF",
+      "label": "PaddleOCR-VL-1.5-GGUF",
+      "type": "model",
+      "category": "unknown",
+      "color": "#cccccc",
+      "val": 4.01,
+      "downloads": 10326,
+      "likes": 12,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "unknown"
+    },
+    {
+      "id": "PaddlePaddle/PP-LCNet_x1_0_table_cls",
+      "label": "PP-LCNet_x1_0_table_cls",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 4.01,
+      "downloads": 10204,
+      "likes": 0,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/korean_PP-OCRv5_mobile_rec",
+      "label": "korean_PP-OCRv5_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.96,
+      "downloads": 9135,
+      "likes": 13,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PaddleOCR-VL",
+      "label": "PaddleOCR-VL",
+      "type": "model",
+      "category": "image-text-to-text",
+      "color": "#ff8c00",
+      "val": 3.92,
+      "downloads": 8401,
+      "likes": 1578,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-text-to-text"
+    },
+    {
+      "id": "PaddlePaddle/SLANeXt_wired",
+      "label": "SLANeXt_wired",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.91,
+      "downloads": 8043,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/SLANet_plus",
+      "label": "SLANet_plus",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.9,
+      "downloads": 8029,
+      "likes": 0,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/eslav_PP-OCRv5_mobile_rec",
+      "label": "eslav_PP-OCRv5_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.9,
+      "downloads": 7905,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-DocBlockLayout",
+      "label": "PP-DocBlockLayout",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.89,
+      "downloads": 7740,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-FormulaNet_plus-L",
+      "label": "PP-FormulaNet_plus-L",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.79,
+      "downloads": 6175,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-Chart2Table",
+      "label": "PP-Chart2Table",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.79,
+      "downloads": 6143,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-OCRv4_mobile_rec",
+      "label": "PP-OCRv4_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.65,
+      "downloads": 4430,
+      "likes": 2,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/en_PP-OCRv4_mobile_rec",
+      "label": "en_PP-OCRv4_mobile_rec",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.58,
+      "downloads": 3807,
+      "likes": 3,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "PaddlePaddle/PP-LCNet_x0_25_textline_ori",
+      "label": "PP-LCNet_x0_25_textline_ori",
+      "type": "model",
+      "category": "image-to-text",
+      "color": "#dcbeff",
+      "val": 3.54,
+      "downloads": 3458,
+      "likes": 1,
+      "lastModified": "",
+      "author": "PaddlePaddle",
+      "pipeline_tag": "image-to-text"
+    },
+    {
+      "id": "Tongyi-MAI/Z-Image-Turbo",
+      "label": "Z-Image-Turbo",
+      "type": "model",
+      "category": "text-to-image",
+      "color": "#fabed4",
+      "val": 5.91,
+      "downloads": 806053,
+      "likes": 4353,
+      "lastModified": "",
+      "author": "Tongyi-MAI",
+      "pipeline_tag": "text-to-image"
+    },
+    {
+      "id": "Tongyi-MAI/Z-Image",
+      "label": "Z-Image",
+      "type": "model",
+      "category": "text-to-image",
+      "color": "#fabed4",
+      "val": 4.68,
+      "downloads": 48363,
+      "likes": 1017,
+      "lastModified": "",
+      "author": "Tongyi-MAI",
+      "pipeline_tag": "text-to-image"
+    },
+    {
+      "id": "Tongyi-MAI/MAI-UI-8B",
+      "label": "MAI-UI-8B",
+      "type": "model",
+      "category": "image-text-to-text",
+      "color": "#ff8c00",
+      "val": 3.68,
+      "downloads": 4759,
+      "likes": 187,
+      "lastModified": "",
+      "author": "Tongyi-MAI",
+      "pipeline_tag": "image-text-to-text"
+    },
+    {
+      "id": "Tongyi-MAI/MAI-UI-2B",
+      "label": "MAI-UI-2B",
+      "type": "model",
+      "category": "unknown",
+      "color": "#cccccc",
+      "val": 3.06,
+      "downloads": 1146,
+      "likes": 48,
+      "lastModified": "",
+      "author": "Tongyi-MAI",
+      "pipeline_tag": "unknown"
     }
   ],
   "edges": [
@@ -17066,6 +17530,181 @@
       "source": "black-forest-labs/FLUX.1-dev",
       "target": "modelscope/EliGen",
       "type": "derived"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/UVDoc",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv5_server_det",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-LCNet_x1_0_doc_ori",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/en_PP-OCRv5_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PaddleOCR-VL-1.5",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-DocLayoutV3_safetensors",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle/PP-DocLayoutV3",
+      "target": "PaddlePaddle/PP-DocLayoutV3_safetensors",
+      "type": "derived"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-LCNet_x1_0_textline_ori",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv5_server_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv5_mobile_det",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/latin_PP-OCRv5_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-DocLayoutV3",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/RT-DETR-L_wired_table_cell_det",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/RT-DETR-L_wireless_table_cell_det",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv5_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-DocLayoutV2",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv4_mobile_det",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-DocLayout_plus-L",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PaddleOCR-VL-1.5-GGUF",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-LCNet_x1_0_table_cls",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/korean_PP-OCRv5_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PaddleOCR-VL",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/SLANeXt_wired",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/SLANet_plus",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/eslav_PP-OCRv5_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-DocBlockLayout",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-FormulaNet_plus-L",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-Chart2Table",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-OCRv4_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/en_PP-OCRv4_mobile_rec",
+      "type": "owns"
+    },
+    {
+      "source": "PaddlePaddle",
+      "target": "PaddlePaddle/PP-LCNet_x0_25_textline_ori",
+      "type": "owns"
+    },
+    {
+      "source": "Tongyi-MAI",
+      "target": "Tongyi-MAI/Z-Image-Turbo",
+      "type": "owns"
+    },
+    {
+      "source": "Tongyi-MAI",
+      "target": "Tongyi-MAI/Z-Image",
+      "type": "owns"
+    },
+    {
+      "source": "Tongyi-MAI",
+      "target": "Tongyi-MAI/MAI-UI-8B",
+      "type": "owns"
+    },
+    {
+      "source": "Tongyi-MAI",
+      "target": "Tongyi-MAI/MAI-UI-2B",
+      "type": "owns"
     }
   ]
 }

@@ -239,11 +239,42 @@
     </div>
     <input id="dl-threshold" type="range" min="0" max="100" value="0" step="1">
 
-    <div class="section-title">Organizations</div>
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Organizations</span>
+      <span style="display:flex;gap:4px;">
+        <button class="btn btn-secondary" id="org-show-all" style="padding:1px 6px;font-size:9px;">All</button>
+        <button class="btn btn-secondary" id="org-hide-all" style="padding:1px 6px;font-size:9px;">None</button>
+      </span>
+    </div>
     <div id="org-list"></div>
 
-    <div class="section-title">Pipeline Tags</div>
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Pipeline Tags</span>
+      <span style="display:flex;gap:4px;">
+        <button class="btn btn-secondary" id="pipe-show-all" style="padding:1px 6px;font-size:9px;">All</button>
+        <button class="btn btn-secondary" id="pipe-hide-all" style="padding:1px 6px;font-size:9px;">None</button>
+      </span>
+    </div>
     <div id="pipeline-list"></div>
+
+    <div class="section-title" style="margin-top:14px;">Layout</div>
+    <div style="display:flex;gap:4px;margin-bottom:8px;">
+      <button class="btn btn-primary" id="btn-force" style="flex:1;">Force</button>
+      <button class="btn btn-secondary" id="btn-timeline" style="flex:1;">🕐 Timeline</button>
+    </div>
+    <div id="timeline-controls" style="display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#8b949e;margin-bottom:4px;">
+        <span>Year range</span><span id="tl-range-label"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+        <span style="font-size:10px;color:#8b949e;width:28px;">From</span>
+        <input id="tl-start" type="range" style="flex:1;accent-color:#FFD21E;cursor:pointer;">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10px;color:#8b949e;width:28px;">To</span>
+        <input id="tl-end" type="range" style="flex:1;accent-color:#FFD21E;cursor:pointer;">
+      </div>
+    </div>
 
     <div class="section-title" style="margin-top:14px;">Actions</div>
     <div style="display:flex;gap:4px;">
@@ -400,6 +431,30 @@ fetch('graph.json').then(r => r.json()).then(data => {
     pipeListEl.appendChild(row);
   });
 
+  // Org All/None buttons
+  document.getElementById('org-show-all').addEventListener('click', () => {
+    state.hiddenOrgs.clear();
+    orgListEl.querySelectorAll('.org-row').forEach(r => r.classList.remove('disabled'));
+    refreshGraph();
+  });
+  document.getElementById('org-hide-all').addEventListener('click', () => {
+    orgNodes.forEach(o => state.hiddenOrgs.add(o.id));
+    orgListEl.querySelectorAll('.org-row').forEach(r => r.classList.add('disabled'));
+    refreshGraph();
+  });
+
+  // Pipeline All/None buttons
+  document.getElementById('pipe-show-all').addEventListener('click', () => {
+    state.hiddenPipelines.clear();
+    pipeListEl.querySelectorAll('.cat-row').forEach(r => r.classList.remove('disabled'));
+    refreshGraph();
+  });
+  document.getElementById('pipe-hide-all').addEventListener('click', () => {
+    sortedPipelines.forEach(([cat]) => state.hiddenPipelines.add(cat));
+    pipeListEl.querySelectorAll('.cat-row').forEach(r => r.classList.add('disabled'));
+    refreshGraph();
+  });
+
   // --- Filtered data ---
   function getFilteredData() {
     const visNodes = allNodes.filter(n => {
@@ -413,6 +468,11 @@ fetch('graph.json').then(r => r.json()).then(data => {
       // Hide model if its org is hidden
       const author = n.id.split('/')[0];
       if (state.hiddenOrgs.has(author)) return false;
+      // Timeline year filter
+      if (currentLayout === 'timeline') {
+        const yr = getNodeYear(n);
+        if (yr < tlStartYear || yr > tlEndYear) return false;
+      }
       return true;
     });
     const visNodeIds = new Set(visNodes.map(n => n.id));
@@ -816,11 +876,185 @@ fetch('graph.json').then(r => r.json()).then(data => {
     state.highlightNodes.clear(); state.highlightLinks.clear();
     document.getElementById('node-info').style.display = 'none';
     document.getElementById('depth-wrap').style.display = 'none';
-    refreshGraph();
+    if (currentLayout === 'timeline') setLayout('force');
+    else refreshGraph();
+    Graph.zoomToFit(400, 80);
   });
 
   document.getElementById('btn-reset-view').addEventListener('click', () => {
-    Graph.cameraPosition({x: 0, y: 0, z: 400}, {x: 0, y: 0, z: 0}, 1000);
+    if (currentLayout === 'timeline') {
+      const cam = Graph.camera();
+      cam.up.set(0, 1, 0);
+      const midX = yearToX((tlStartYear + tlEndYear) / 2);
+      Graph.cameraPosition({x: midX, y: 150, z: 2000}, {x: midX, y: 150, z: 0}, 800);
+    } else {
+      Graph.zoomToFit(400, 80);
+    }
+  });
+
+  // --- Timeline layout ---
+  let currentLayout = 'force';
+  const TL_DISPLAY = 2000;
+  const TL_NOW = new Date().getFullYear();
+
+  // Parse dates from lastModified
+  function getNodeYear(n) {
+    if (!n.lastModified) return 2024;
+    const d = new Date(n.lastModified);
+    return isNaN(d.getTime()) ? 2024 : d.getFullYear() + d.getMonth() / 12;
+  }
+
+  // Find year range
+  const allYears = allNodes.filter(n => n.type === 'model' && n.lastModified)
+    .map(n => getNodeYear(n));
+  const minYear = allYears.length ? Math.floor(Math.min(...allYears)) : 2020;
+  const maxYear = TL_NOW;
+  let tlStartYear = minYear, tlEndYear = maxYear;
+
+  // Setup sliders
+  const tlStartSlider = document.getElementById('tl-start');
+  const tlEndSlider = document.getElementById('tl-end');
+  const tlRangeLabel = document.getElementById('tl-range-label');
+  tlStartSlider.min = minYear; tlStartSlider.max = maxYear; tlStartSlider.value = minYear;
+  tlEndSlider.min = minYear; tlEndSlider.max = maxYear; tlEndSlider.value = maxYear;
+  tlRangeLabel.textContent = `${minYear} – ${maxYear}`;
+
+  function yearToX(year) {
+    const range = tlEndYear - tlStartYear || 1;
+    const t = (year - tlStartYear) / range;
+    return t * TL_DISPLAY;
+  }
+
+  function strHash(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return h >>> 0;
+  }
+
+  function pinTimelineNodes() {
+    const orgList = orgNodes.map(n => n.id).sort();
+    allNodes.forEach(n => {
+      const year = getNodeYear(n);
+      const h = strHash(n.id);
+      if (n.type === 'org') {
+        // Place orgs at the top, spread along X by average model year
+        const models = allNodes.filter(m => m.type === 'model' && m.id.startsWith(n.id + '/'));
+        const avgYr = models.length ? models.reduce((s, m) => s + getNodeYear(m), 0) / models.length : 2024;
+        const orgIdx = orgList.indexOf(n.id);
+        n.fx = yearToX(avgYr);
+        n.fy = 300 + (((h & 0xff) / 255) - 0.5) * 80;
+        n.fz = (orgIdx - orgList.length/2) * 30;
+      } else {
+        const orgIdx = orgList.indexOf(n.id.split('/')[0]);
+        n.fx = yearToX(year);
+        n.fy = (orgIdx - orgList.length/2) * 25 + (((h & 0xff) / 255) - 0.5) * 60 + 100;
+        n.fz = ((((h >> 8) & 0xff) / 255) - 0.5) * 200;
+      }
+    });
+  }
+
+  function unpinNodes() {
+    allNodes.forEach(n => { n.fx = undefined; n.fy = undefined; n.fz = undefined; });
+  }
+
+  let timelineAxisGroup = null;
+
+  function buildTimelineAxis() {
+    const group = new THREE.Group();
+    const AY = -50, AZ = 0;
+    const x0 = yearToX(tlStartYear), x1 = yearToX(tlEndYear);
+
+    // Main axis line
+    const axisGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x0, AY, AZ), new THREE.Vector3(x1, AY, AZ)
+    ]);
+    group.add(new THREE.Line(axisGeo, new THREE.LineBasicMaterial({color: 0xFFD21E, opacity: 0.5, transparent: true})));
+
+    // Arrow
+    const arrGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x1 - 10, AY + 5, AZ),
+      new THREE.Vector3(x1, AY, AZ),
+      new THREE.Vector3(x1 - 10, AY - 5, AZ),
+    ]);
+    group.add(new THREE.Line(arrGeo, new THREE.LineBasicMaterial({color: 0xFFD21E, opacity: 0.5, transparent: true})));
+
+    // Ticks
+    const span = tlEndYear - tlStartYear;
+    const step = span <= 2 ? 0.25 : span <= 5 ? 0.5 : 1;
+    for (let y = Math.ceil(tlStartYear); y <= tlEndYear; y += step) {
+      const x = yearToX(y);
+      const isWhole = Math.abs(y - Math.round(y)) < 0.01;
+      const tickH = isWhole ? 12 : 6;
+      const tGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, AY, AZ), new THREE.Vector3(x, AY + tickH, AZ)
+      ]);
+      group.add(new THREE.Line(tGeo, new THREE.LineBasicMaterial({color: 0xFFD21E, opacity: 0.4, transparent: true})));
+
+      if (isWhole) {
+        const sp = new SpriteText(String(Math.round(y)));
+        sp.color = '#FFD21E';
+        sp.textHeight = 4;
+        sp.fontFace = 'Segoe UI, sans-serif';
+        sp.fontWeight = '600';
+        sp.position.set(x, AY + tickH + 6, AZ);
+        sp.material.depthTest = false;
+        sp.renderOrder = 100;
+        group.add(sp);
+      }
+    }
+    return group;
+  }
+
+  function showTimelineAxis() {
+    hideTimelineAxis();
+    timelineAxisGroup = buildTimelineAxis();
+    Graph.scene().add(timelineAxisGroup);
+  }
+
+  function hideTimelineAxis() {
+    if (timelineAxisGroup) {
+      Graph.scene().remove(timelineAxisGroup);
+      timelineAxisGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) { if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); }
+      });
+      timelineAxisGroup = null;
+    }
+  }
+
+  function setLayout(mode) {
+    currentLayout = mode;
+    document.getElementById('btn-force').className = 'btn ' + (mode === 'force' ? 'btn-primary' : 'btn-secondary');
+    document.getElementById('btn-timeline').className = 'btn ' + (mode === 'timeline' ? 'btn-primary' : 'btn-secondary');
+    document.getElementById('timeline-controls').style.display = mode === 'timeline' ? 'block' : 'none';
+
+    if (mode === 'timeline') {
+      pinTimelineNodes();
+      refreshGraph();
+      showTimelineAxis();
+      Graph.d3ReheatSimulation();
+    } else {
+      unpinNodes();
+      hideTimelineAxis();
+      refreshGraph();
+      Graph.d3ReheatSimulation();
+    }
+  }
+
+  document.getElementById('btn-force').addEventListener('click', () => setLayout('force'));
+  document.getElementById('btn-timeline').addEventListener('click', () => setLayout('timeline'));
+
+  tlStartSlider.addEventListener('input', () => {
+    tlStartYear = parseInt(tlStartSlider.value);
+    if (tlStartYear >= tlEndYear) { tlStartYear = tlEndYear - 1; tlStartSlider.value = tlStartYear; }
+    tlRangeLabel.textContent = `${tlStartYear} – ${tlEndYear}`;
+    if (currentLayout === 'timeline') { pinTimelineNodes(); refreshGraph(); showTimelineAxis(); Graph.d3ReheatSimulation(); }
+  });
+  tlEndSlider.addEventListener('input', () => {
+    tlEndYear = parseInt(tlEndSlider.value);
+    if (tlEndYear <= tlStartYear) { tlEndYear = tlStartYear + 1; tlEndSlider.value = tlEndYear; }
+    tlRangeLabel.textContent = `${tlStartYear} – ${tlEndYear}`;
+    if (currentLayout === 'timeline') { pinTimelineNodes(); refreshGraph(); showTimelineAxis(); Graph.d3ReheatSimulation(); }
   });
 
   // --- Initial render ---
