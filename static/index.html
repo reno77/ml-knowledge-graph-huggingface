@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HuggingFace Model Knowledge Graph - 3D</title>
+  <script src="https://unpkg.com/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
+  <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three-spritetext@1.8.1/dist/three-spritetext.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+    #graph { width: 100vw; height: 100vh; }
+
+    #header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: linear-gradient(180deg, rgba(13,17,23,0.97) 60%, transparent 100%);
+      padding: 12px 20px 20px;
+    }
+    #header h1 { font-size: 20px; font-weight: 700; color: #FFD21E; }
+    #header p  { font-size: 11px; color: #8b949e; margin-top: 2px; }
+
+    /* Side panel */
+    #panel {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 100;
+      width: 260px; background: rgba(22,27,34,0.97);
+      border-left: 1px solid #30363d;
+      display: flex; flex-direction: column;
+      overflow: hidden; transition: transform 0.3s ease;
+    }
+    #panel.hidden { transform: translateX(100%); }
+    #panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #30363d;
+      font-size: 13px; font-weight: 600; color: #FFD21E;
+    }
+    #panel-body {
+      flex: 1; overflow-y: auto; padding: 12px 14px;
+    }
+
+    .section-title {
+      font-size: 10px; color: #FFD21E; text-transform: uppercase;
+      letter-spacing: 1.5px; margin: 14px 0 6px;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 4px 0;
+    }
+    .toggle-label { font-size: 12px; color: #c9d1d9; }
+    .toggle-switch {
+      position: relative; width: 32px; height: 17px; cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #30363d;
+      border-radius: 17px; transition: 0.2s;
+    }
+    .toggle-slider:before {
+      content: ''; position: absolute;
+      width: 11px; height: 11px; left: 3px; bottom: 3px;
+      background: #8b949e; border-radius: 50%; transition: 0.2s;
+    }
+    input:checked + .toggle-slider { background: #FFD21E; }
+    input:checked + .toggle-slider:before { background: #0d1117; transform: translateX(15px); }
+
+    .cat-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .cat-row:hover { background: rgba(255,210,30,0.06); }
+    .cat-row.disabled { opacity: 0.35; }
+    .cat-dot-label { display: flex; align-items: center; gap: 6px; }
+    .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { font-size: 11px; color: #c9d1d9; }
+    .cat-count { font-size: 10px; color: #8b949e; }
+
+    .org-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .org-row:hover { background: rgba(255,210,30,0.06); }
+    .org-row.disabled { opacity: 0.35; }
+    .org-name { font-size: 11px; color: #c9d1d9; }
+    .org-count { font-size: 10px; color: #8b949e; }
+
+    /* Node info panel */
+    #node-info {
+      position: fixed; bottom: 16px; left: 16px; z-index: 100;
+      background: rgba(22,27,34,0.97); border: 1px solid #30363d;
+      border-radius: 12px; padding: 14px 16px; max-width: 320px;
+      display: none; max-height: 70vh; overflow-y: auto;
+    }
+    #node-info .ni-name  { font-size: 15px; font-weight: 700; }
+    #node-info .ni-badge {
+      display: inline-block; font-size: 10px; padding: 2px 8px;
+      border-radius: 10px; margin-top: 4px; font-weight: 600;
+    }
+    #node-info .ni-stat  { font-size: 11px; color: #8b949e; margin-top: 3px; }
+    #node-info .ni-links { font-size: 11px; color: #c9d1d9; margin-top: 8px;
+                           border-top: 1px solid #30363d; padding-top: 8px;
+                           max-height: 120px; overflow-y: auto; }
+    #node-info .ni-close { float: right; cursor: pointer; color: #8b949e; font-size: 14px; }
+    #node-info .ni-close:hover { color: #FFD21E; }
+    .ni-hf-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 8px; font-size: 11px; color: #FFD21E; text-decoration: none;
+      border-top: 1px solid #30363d; padding-top: 8px; width: 100%;
+    }
+    .ni-hf-link:hover { text-decoration: underline; }
+
+    #panel-toggle {
+      position: fixed; top: 50%; right: 260px; transform: translateY(-50%);
+      z-index: 101; width: 20px; height: 48px;
+      background: rgba(22,27,34,0.97); border: 1px solid #30363d;
+      border-right: none; border-radius: 8px 0 0 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #FFD21E; font-size: 12px;
+      transition: right 0.3s; user-select: none;
+    }
+    #panel-toggle.panel-hidden { right: 0; }
+
+    #hint {
+      position: fixed; bottom: 16px; right: 270px; z-index: 100;
+      font-size: 10px; color: #484f58; text-align: right; line-height: 2;
+      transition: right 0.3s;
+    }
+    #hint.panel-hidden { right: 16px; }
+
+    /* Search */
+    #search-wrap { margin-top: 8px; position: relative; display: inline-block; }
+    #search-box {
+      background: rgba(22,27,34,0.97); border: 1px solid #30363d; border-radius: 20px;
+      padding: 5px 14px; font-size: 12px; color: #c9d1d9; outline: none; width: 280px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    #search-box::placeholder { color: #484f58; }
+    #search-box:focus { border-color: #FFD21E; }
+    #search-clear {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; color: #8b949e; font-size: 13px; display: none;
+    }
+    #search-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 999;
+      background: rgba(22,27,34,0.99); border: 1px solid #30363d; border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3); min-width: 300px; max-height: 280px;
+      overflow-y: auto; padding: 4px 0;
+    }
+    .search-item {
+      padding: 6px 14px; cursor: pointer; font-size: 12px; color: #c9d1d9;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .search-item:hover { background: rgba(255,210,30,0.1); }
+    .search-item .si-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .search-item .si-type { font-size: 9px; color: #8b949e; margin-left: auto; }
+
+    /* Range slider */
+    input[type="range"] {
+      width: 100%; accent-color: #FFD21E; cursor: pointer;
+      background: transparent;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;
+      border: 1px solid #30363d; transition: all 0.15s;
+    }
+    .btn-primary { background: #FFD21E; color: #0d1117; border-color: #FFD21E; font-weight: 600; }
+    .btn-primary:hover { background: #e6bd1a; }
+    .btn-secondary { background: #21262d; color: #c9d1d9; }
+    .btn-secondary:hover { background: #30363d; }
+
+    /* Depth slider in node info */
+    #depth-wrap {
+      margin-top: 10px; border-top: 1px solid #30363d; padding-top: 10px; display: none;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #161b22; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>HuggingFace Model Graph</h1>
+  <p id="stat-line">Loading...</p>
+  <div id="search-wrap">
+    <div style="position:relative;display:inline-block;">
+      <input id="search-box" type="text" placeholder="Search models or orgs..." autocomplete="off">
+      <span id="search-clear">&#10005;</span>
+    </div>
+    <div id="search-dropdown"></div>
+  </div>
+</div>
+
+<!-- Side panel -->
+<div id="panel">
+  <div id="panel-header">Filters &amp; Display</div>
+  <div id="panel-body">
+    <div class="section-title">Display</div>
+    <div class="toggle-row">
+      <span class="toggle-label">Labels</span>
+      <label class="toggle-switch"><input type="checkbox" id="showLabels" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Links</span>
+      <label class="toggle-switch"><input type="checkbox" id="showLinks" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Arrows</span>
+      <label class="toggle-switch"><input type="checkbox" id="showArrows" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Particles</span>
+      <label class="toggle-switch"><input type="checkbox" id="showParticles" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Translucent</span>
+      <label class="toggle-switch"><input type="checkbox" id="showGlow"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="section-title">Edge Types</div>
+    <div class="toggle-row">
+      <span class="toggle-label">Ownership edges</span>
+      <label class="toggle-switch"><input type="checkbox" id="showOwns" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Derived edges</span>
+      <label class="toggle-switch"><input type="checkbox" id="showDerived" checked><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="section-title">Download Threshold</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:11px;color:#8b949e;">Min downloads</span>
+      <span id="dl-threshold-label" style="font-size:11px;color:#FFD21E;font-weight:700;">0</span>
+    </div>
+    <input id="dl-threshold" type="range" min="0" max="100" value="0" step="1">
+
+    <div class="section-title">Organizations</div>
+    <div id="org-list"></div>
+
+    <div class="section-title">Pipeline Tags</div>
+    <div id="pipeline-list"></div>
+
+    <div class="section-title" style="margin-top:14px;">Actions</div>
+    <div style="display:flex;gap:4px;">
+      <button class="btn btn-secondary" id="btn-reset" style="flex:1;">Reset All Filters</button>
+      <button class="btn btn-secondary" id="btn-reset-view">Reset View</button>
+    </div>
+  </div>
+</div>
+
+<!-- Node info -->
+<div id="node-info">
+  <span class="ni-close" id="ni-close">&#10005;</span>
+  <div class="ni-name" id="ni-name"></div>
+  <div id="ni-badge-wrap"></div>
+  <div class="ni-stat" id="ni-downloads"></div>
+  <div class="ni-stat" id="ni-likes"></div>
+  <div class="ni-stat" id="ni-modified"></div>
+  <div class="ni-stat" id="ni-author"></div>
+  <div class="ni-stat" id="ni-base"></div>
+  <a id="ni-hf-link" class="ni-hf-link" href="#" target="_blank" rel="noopener">View on HuggingFace &#8599;</a>
+  <div class="ni-links" id="ni-links"></div>
+  <div id="depth-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-size:11px;color:#8b949e;font-weight:600;">Connection Depth</span>
+      <span id="depth-val" style="font-size:12px;color:#FFD21E;font-weight:700;">1</span>
+    </div>
+    <input id="depth-slider" type="range" min="1" max="3" value="1" step="1">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#484f58;margin-top:2px;">
+      <span>Direct</span><span>2 hops</span><span>3 hops</span>
+    </div>
+  </div>
+</div>
+
+<div id="panel-toggle" title="Toggle panel">&#9664;</div>
+<div id="hint">Left drag to rotate &middot; Scroll to zoom<br>Right drag to pan &middot; Click node to inspect</div>
+<div id="graph"></div>
+
+<script>
+const ORG_COLOR = '#1a6985';
+const BG_COLOR = '#0d1117';
+const ACCENT   = '#FFD21E';
+
+const state = {
+  labels: true, links: true, arrows: true, particles: true, glow: false,
+  showOwns: true, showDerived: true,
+  hiddenOrgs: new Set(), hiddenPipelines: new Set(),
+  dlThreshold: 0,
+  highlighted: null, highlightNodes: new Set(), highlightLinks: new Set(),
+};
+
+// Format download counts
+function fmtNum(n) {
+  if (n == null) return '0';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+fetch('graph.json').then(r => r.json()).then(data => {
+  const allNodes = data.nodes.map(n => ({
+    ...n,
+    downloads: n.downloads || 0,
+    likes: n.likes || 0,
+    lastModified: n.lastModified || '',
+  }));
+  const allLinks = data.edges.map(e => ({ source: e.source, target: e.target, edgeType: e.type }));
+
+  const nodeMap = {};
+  allNodes.forEach(n => nodeMap[n.id] = n);
+
+  // Compute stats
+  const orgNodes = allNodes.filter(n => n.type === 'org');
+  const modelNodes = allNodes.filter(n => n.type === 'model');
+  const maxDl = Math.max(...modelNodes.map(n => n.downloads), 1);
+
+  // Pipeline categories with colors and counts
+  const pipelineCounts = {};
+  const pipelineColors = {};
+  modelNodes.forEach(n => {
+    const cat = n.category || 'unknown';
+    pipelineCounts[cat] = (pipelineCounts[cat] || 0) + 1;
+    if (!pipelineColors[cat]) pipelineColors[cat] = n.color || '#cccccc';
+  });
+  const sortedPipelines = Object.entries(pipelineCounts).sort((a,b) => b[1] - a[1]);
+
+  // Org counts
+  const orgCounts = {};
+  allLinks.forEach(l => {
+    const sid = typeof l.source === 'object' ? l.source.id : l.source;
+    const tid = typeof l.target === 'object' ? l.target.id : l.target;
+    if (nodeMap[sid] && nodeMap[sid].type === 'org') {
+      orgCounts[sid] = (orgCounts[sid] || 0) + 1;
+    }
+  });
+
+  // Derived edge map: target -> source (base model)
+  const derivedFrom = {};
+  allLinks.forEach(l => {
+    if (l.edgeType === 'derived') {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      derivedFrom[tid] = sid;
+    }
+  });
+
+  // Stats line
+  document.getElementById('stat-line').textContent =
+    `${modelNodes.length} models \u00b7 ${allLinks.length} edges \u00b7 ${orgNodes.length} organizations \u00b7 Click to explore`;
+
+  // Download threshold slider - use log scale for usability
+  const dlSlider = document.getElementById('dl-threshold');
+  const dlLabel  = document.getElementById('dl-threshold-label');
+  dlSlider.min = 0;
+  dlSlider.max = 100;
+  dlSlider.value = 0;
+  dlLabel.textContent = '0';
+
+  function sliderToDl(val) {
+    // Map 0-100 slider to 0-maxDl on a log scale
+    if (val <= 0) return 0;
+    return Math.round(Math.pow(10, (val / 100) * Math.log10(maxDl)));
+  }
+  dlSlider.addEventListener('input', () => {
+    state.dlThreshold = sliderToDl(parseInt(dlSlider.value));
+    dlLabel.textContent = fmtNum(state.dlThreshold);
+    refreshGraph();
+  });
+
+  // Build org list
+  const orgListEl = document.getElementById('org-list');
+  orgNodes.sort((a,b) => (orgCounts[b.id]||0) - (orgCounts[a.id]||0)).forEach(org => {
+    const row = document.createElement('div');
+    row.className = 'org-row';
+    row.innerHTML = `<span class="org-name">${org.label}</span><span class="org-count">${orgCounts[org.id]||0}</span>`;
+    row.addEventListener('click', () => {
+      if (state.hiddenOrgs.has(org.id)) { state.hiddenOrgs.delete(org.id); row.classList.remove('disabled'); }
+      else { state.hiddenOrgs.add(org.id); row.classList.add('disabled'); }
+      refreshGraph();
+    });
+    orgListEl.appendChild(row);
+  });
+
+  // Build pipeline list
+  const pipeListEl = document.getElementById('pipeline-list');
+  sortedPipelines.forEach(([cat, count]) => {
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML = `<div class="cat-dot-label"><span class="cat-dot" style="background:${pipelineColors[cat]}"></span><span class="cat-name">${cat}</span></div><span class="cat-count">${count}</span>`;
+    row.addEventListener('click', () => {
+      if (state.hiddenPipelines.has(cat)) { state.hiddenPipelines.delete(cat); row.classList.remove('disabled'); }
+      else { state.hiddenPipelines.add(cat); row.classList.add('disabled'); }
+      refreshGraph();
+    });
+    pipeListEl.appendChild(row);
+  });
+
+  // --- Filtered data ---
+  function getFilteredData() {
+    const visNodes = allNodes.filter(n => {
+      if (n.type === 'org') {
+        if (state.hiddenOrgs.has(n.id)) return false;
+        return true;
+      }
+      // Model node
+      if (state.hiddenPipelines.has(n.category)) return false;
+      if (n.downloads < state.dlThreshold) return false;
+      // Hide model if its org is hidden
+      const author = n.id.split('/')[0];
+      if (state.hiddenOrgs.has(author)) return false;
+      return true;
+    });
+    const visNodeIds = new Set(visNodes.map(n => n.id));
+
+    const visLinks = allLinks.filter(l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      if (!visNodeIds.has(sid) || !visNodeIds.has(tid)) return false;
+      if (!state.links) return false;
+      if (l.edgeType === 'owns' && !state.showOwns) return false;
+      if (l.edgeType === 'derived' && !state.showDerived) return false;
+      return true;
+    });
+
+    return { nodes: visNodes, links: visLinks };
+  }
+
+  // --- 3D Graph ---
+  const Graph = ForceGraph3D()(document.getElementById('graph'))
+    .backgroundColor(BG_COLOR)
+    .nodeLabel('')
+    .nodeVal(n => n.val)
+    .nodeOpacity(0.92)
+    .nodeResolution(16)
+    .linkDirectionalArrowRelPos(1)
+    .linkDirectionalParticleSpeed(0.005)
+    .linkDirectionalParticleWidth(2)
+    .linkDirectionalParticleColor(() => ACCENT)
+    .d3Force('center', null);
+
+  function refreshGraph() {
+    const fd = getFilteredData();
+    Graph.graphData(fd);
+    refreshVisuals();
+  }
+
+  function refreshVisuals() {
+    Graph
+      .nodeThreeObject(n => buildNodeObj(n))
+      .nodeThreeObjectExtend(false)
+      .linkColor(l => linkColor(l))
+      .linkWidth(l => linkWidth(l))
+      .linkOpacity(0.6)
+      .linkDirectionalArrowLength(l => {
+        if (!state.arrows) return 0;
+        const et = l.edgeType;
+        return et === 'derived' ? 5 : 0;
+      })
+      .linkDirectionalParticles(l => linkParticles(l));
+  }
+
+  function buildNodeObj(n) {
+    const isDimmed = state.highlighted && !state.highlightNodes.has(n.id);
+    const group = new THREE.Group();
+    const isOrg = n.type === 'org';
+
+    // Sphere
+    const radius = isOrg ? n.val * 2.0 : n.val * 1.3;
+    const mainOpacity = isDimmed ? 0.08 : (state.glow ? 0.2 : 0.92);
+    group.add(new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 16, 16),
+      new THREE.MeshLambertMaterial({
+        color: n.color || (isOrg ? ORG_COLOR : '#cccccc'),
+        transparent: true,
+        opacity: mainOpacity,
+      })
+    ));
+
+    // Labels
+    const showLabel = isOrg || (state.labels && !isDimmed);
+    if (showLabel) {
+      const sp = new SpriteText(n.label);
+      sp.color = '#ffffff';
+      sp.textHeight = isOrg ? 5 : 3;
+      sp.fontFace = 'Segoe UI, sans-serif';
+      sp.fontWeight = isOrg ? '700' : '500';
+      sp.backgroundColor = isOrg ? 'rgba(26,105,133,0.85)' : 'rgba(13,17,23,0.75)';
+      sp.padding = 1.5;
+      sp.borderRadius = 3;
+      sp.position.y = radius + (isOrg ? 6 : 4);
+      sp.material.depthTest = false;
+      sp.renderOrder = 999;
+      if (isDimmed) { sp.material.opacity = 0.15; }
+      group.add(sp);
+    }
+
+    return group;
+  }
+
+  function getSrcTgt(l) {
+    return [
+      typeof l.source === 'object' ? l.source.id : l.source,
+      typeof l.target === 'object' ? l.target.id : l.target
+    ];
+  }
+
+  function linkColor(l) {
+    const [s, t] = getSrcTgt(l);
+    const key = `${s}-${t}`;
+    if (state.highlighted) {
+      return state.highlightLinks.has(key) ? ACCENT : 'rgba(100,100,120,0.1)';
+    }
+    if (l.edgeType === 'derived') {
+      const tn = nodeMap[t];
+      return tn ? tn.color + 'cc' : '#FFD21Eaa';
+    }
+    // owns edge
+    return 'rgba(100,120,140,0.18)';
+  }
+
+  function linkWidth(l) {
+    const [s, t] = getSrcTgt(l);
+    if (state.highlightLinks.has(`${s}-${t}`)) return 2.5;
+    return l.edgeType === 'derived' ? 1.2 : 0.3;
+  }
+
+  function linkParticles(l) {
+    if (!state.particles) return 0;
+    if (l.edgeType !== 'derived') return 0;
+    const [s, t] = getSrcTgt(l);
+    return state.highlightLinks.has(`${s}-${t}`) ? 4 : 1;
+  }
+
+  // --- Node click ---
+  let currentDepth = 1;
+
+  function highlightAtDepth(nodeId, depth) {
+    state.highlightNodes.clear();
+    state.highlightLinks.clear();
+    state.highlightNodes.add(nodeId);
+    const fd = Graph.graphData();
+
+    // BFS
+    let frontier = new Set([nodeId]);
+    for (let d = 0; d < depth; d++) {
+      const nextFrontier = new Set();
+      fd.links.forEach(l => {
+        const [s, t] = getSrcTgt(l);
+        if (frontier.has(s)) {
+          state.highlightNodes.add(t);
+          state.highlightLinks.add(`${s}-${t}`);
+          nextFrontier.add(t);
+        }
+        if (frontier.has(t)) {
+          state.highlightNodes.add(s);
+          state.highlightLinks.add(`${s}-${t}`);
+          nextFrontier.add(s);
+        }
+      });
+      frontier = nextFrontier;
+    }
+  }
+
+  Graph.onNodeClick(node => {
+    if (state.highlighted === node.id) {
+      // Deselect
+      state.highlighted = null;
+      state.highlightNodes.clear();
+      state.highlightLinks.clear();
+      document.getElementById('node-info').style.display = 'none';
+      document.getElementById('depth-wrap').style.display = 'none';
+    } else {
+      state.highlighted = node.id;
+      currentDepth = 1;
+      document.getElementById('depth-slider').value = 1;
+      document.getElementById('depth-val').textContent = '1';
+      highlightAtDepth(node.id, currentDepth);
+      showNodeInfo(node);
+      const {x=0,y=0,z=0} = node;
+      Graph.cameraPosition({x:x+80,y:y+80,z:z+80}, node, 800);
+    }
+    refreshVisuals();
+  });
+
+  function showNodeInfo(node) {
+    const ni = document.getElementById('node-info');
+    ni.style.display = 'block';
+    document.getElementById('depth-wrap').style.display = 'block';
+
+    // Name
+    const nameEl = document.getElementById('ni-name');
+    nameEl.textContent = node.label;
+    nameEl.style.color = node.color || ACCENT;
+
+    // Badge
+    const badgeWrap = document.getElementById('ni-badge-wrap');
+    if (node.type === 'org') {
+      badgeWrap.innerHTML = `<span class="ni-badge" style="background:${ORG_COLOR};color:#fff;">Organization</span>`;
+    } else {
+      const cat = node.category || 'unknown';
+      const col = node.color || '#cccccc';
+      badgeWrap.innerHTML = `<span class="ni-badge" style="background:${col}22;color:${col};border:1px solid ${col}55;">${cat}</span>`;
+    }
+
+    // Stats
+    const dlEl = document.getElementById('ni-downloads');
+    const likesEl = document.getElementById('ni-likes');
+    const modEl = document.getElementById('ni-modified');
+    const authEl = document.getElementById('ni-author');
+    const baseEl = document.getElementById('ni-base');
+    const hfLink = document.getElementById('ni-hf-link');
+
+    if (node.type === 'model') {
+      dlEl.textContent = 'Downloads: ' + fmtNum(node.downloads);
+      dlEl.style.display = 'block';
+      likesEl.textContent = 'Likes: ' + fmtNum(node.likes);
+      likesEl.style.display = 'block';
+      modEl.textContent = node.lastModified ? ('Modified: ' + node.lastModified) : '';
+      modEl.style.display = node.lastModified ? 'block' : 'none';
+      const author = node.id.split('/')[0];
+      authEl.textContent = 'Author: ' + author;
+      authEl.style.display = 'block';
+
+      // Base model
+      if (derivedFrom[node.id]) {
+        const baseNode = nodeMap[derivedFrom[node.id]];
+        baseEl.textContent = 'Base model: ' + (baseNode ? baseNode.label : derivedFrom[node.id]);
+        baseEl.style.display = 'block';
+      } else {
+        baseEl.style.display = 'none';
+      }
+
+      hfLink.href = 'https://huggingface.co/' + node.id;
+      hfLink.style.display = 'inline-flex';
+    } else {
+      // Org
+      dlEl.textContent = 'Models: ' + (orgCounts[node.id] || 0);
+      dlEl.style.display = 'block';
+      likesEl.style.display = 'none';
+      modEl.style.display = 'none';
+      authEl.style.display = 'none';
+      baseEl.style.display = 'none';
+      hfLink.href = 'https://huggingface.co/' + node.id;
+      hfLink.style.display = 'inline-flex';
+    }
+
+    // Connected nodes
+    const linksEl = document.getElementById('ni-links');
+    const fd = Graph.graphData();
+    const connected = [];
+    fd.links.forEach(l => {
+      const [s, t] = getSrcTgt(l);
+      if (s === node.id && nodeMap[t]) connected.push({ node: nodeMap[t], dir: 'to', type: l.edgeType });
+      if (t === node.id && nodeMap[s]) connected.push({ node: nodeMap[s], dir: 'from', type: l.edgeType });
+    });
+
+    if (connected.length > 0) {
+      // Separate by type
+      const owns = connected.filter(c => c.type === 'owns');
+      const derived = connected.filter(c => c.type === 'derived');
+      let html = '';
+      if (owns.length > 0) {
+        html += '<div style="font-weight:600;margin-bottom:3px;color:#8b949e;">Owned models:</div>';
+        owns.forEach(c => {
+          html += `<div style="cursor:pointer;color:${c.node.color || '#c9d1d9'};margin:1px 0;" class="conn-link" data-id="${c.node.id}">${c.node.label}</div>`;
+        });
+      }
+      if (derived.length > 0) {
+        html += '<div style="font-weight:600;margin-bottom:3px;margin-top:6px;color:#8b949e;">Derived / Base:</div>';
+        derived.forEach(c => {
+          const prefix = c.dir === 'from' ? 'Base: ' : 'Derived: ';
+          html += `<div style="cursor:pointer;color:${c.node.color || '#c9d1d9'};margin:1px 0;" class="conn-link" data-id="${c.node.id}">${prefix}${c.node.label}</div>`;
+        });
+      }
+      linksEl.innerHTML = html;
+      linksEl.style.display = 'block';
+      // Click connected nodes
+      linksEl.querySelectorAll('.conn-link').forEach(el => {
+        el.addEventListener('click', () => {
+          const target = nodeMap[el.dataset.id];
+          if (target) {
+            const gd = Graph.graphData();
+            const gNode = gd.nodes.find(n => n.id === target.id);
+            if (gNode) Graph.onNodeClick(gNode);
+          }
+        });
+      });
+    } else {
+      linksEl.style.display = 'none';
+    }
+  }
+
+  // Depth slider
+  document.getElementById('depth-slider').addEventListener('input', e => {
+    currentDepth = parseInt(e.target.value);
+    document.getElementById('depth-val').textContent = currentDepth;
+    if (state.highlighted) {
+      highlightAtDepth(state.highlighted, currentDepth);
+      refreshVisuals();
+    }
+  });
+
+  // Close node info
+  document.getElementById('ni-close').addEventListener('click', () => {
+    document.getElementById('node-info').style.display = 'none';
+    document.getElementById('depth-wrap').style.display = 'none';
+    state.highlighted = null;
+    state.highlightNodes.clear();
+    state.highlightLinks.clear();
+    refreshVisuals();
+  });
+
+  // --- Display toggles ---
+  function bindToggle(id, key) {
+    const el = document.getElementById(id);
+    el.addEventListener('change', () => { state[key] = el.checked; refreshGraph(); });
+  }
+  bindToggle('showLabels', 'labels');
+  bindToggle('showLinks', 'links');
+  bindToggle('showArrows', 'arrows');
+  bindToggle('showParticles', 'particles');
+  bindToggle('showGlow', 'glow');
+  bindToggle('showOwns', 'showOwns');
+  bindToggle('showDerived', 'showDerived');
+
+  // --- Search ---
+  const searchBox = document.getElementById('search-box');
+  const searchDropdown = document.getElementById('search-dropdown');
+  const searchClear = document.getElementById('search-clear');
+
+  searchBox.addEventListener('input', () => {
+    const q = searchBox.value.trim().toLowerCase();
+    searchClear.style.display = q ? 'block' : 'none';
+    if (q.length < 1) { searchDropdown.style.display = 'none'; return; }
+
+    const matches = allNodes.filter(n =>
+      n.label.toLowerCase().includes(q) || n.id.toLowerCase().includes(q)
+    ).slice(0, 20);
+
+    if (matches.length === 0) { searchDropdown.style.display = 'none'; return; }
+
+    searchDropdown.innerHTML = matches.map(n => {
+      const col = n.color || '#cccccc';
+      const typeLabel = n.type === 'org' ? 'ORG' : (n.category || '');
+      return `<div class="search-item" data-id="${n.id}"><span class="si-dot" style="background:${col}"></span>${n.label}<span class="si-type">${typeLabel}</span></div>`;
+    }).join('');
+    searchDropdown.style.display = 'block';
+
+    searchDropdown.querySelectorAll('.search-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const nid = el.dataset.id;
+        searchDropdown.style.display = 'none';
+        searchBox.value = '';
+        searchClear.style.display = 'none';
+        const gd = Graph.graphData();
+        const gNode = gd.nodes.find(n => n.id === nid);
+        if (gNode) {
+          Graph.onNodeClick(gNode);
+        }
+      });
+    });
+  });
+
+  searchClear.addEventListener('click', () => {
+    searchBox.value = '';
+    searchClear.style.display = 'none';
+    searchDropdown.style.display = 'none';
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    if (!searchBox.contains(e.target) && !searchDropdown.contains(e.target)) {
+      searchDropdown.style.display = 'none';
+    }
+  });
+
+  // --- Panel toggle ---
+  const panel = document.getElementById('panel');
+  const panelToggle = document.getElementById('panel-toggle');
+  const hint = document.getElementById('hint');
+  let panelVisible = true;
+
+  panelToggle.addEventListener('click', () => {
+    panelVisible = !panelVisible;
+    panel.classList.toggle('hidden', !panelVisible);
+    panelToggle.classList.toggle('panel-hidden', !panelVisible);
+    hint.classList.toggle('panel-hidden', !panelVisible);
+    panelToggle.innerHTML = panelVisible ? '&#9664;' : '&#9654;';
+  });
+
+  // --- Reset ---
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    state.hiddenOrgs.clear();
+    state.hiddenPipelines.clear();
+    state.dlThreshold = 0;
+    dlSlider.value = 0;
+    dlLabel.textContent = '0';
+    document.querySelectorAll('.org-row').forEach(r => r.classList.remove('disabled'));
+    document.querySelectorAll('.cat-row').forEach(r => r.classList.remove('disabled'));
+    // Reset toggles
+    ['showLabels','showLinks','showArrows','showParticles'].forEach(id => {
+      document.getElementById(id).checked = true;
+    });
+    document.getElementById('showGlow').checked = false;
+    document.getElementById('showOwns').checked = true;
+    document.getElementById('showDerived').checked = true;
+    state.labels = true; state.links = true; state.arrows = true;
+    state.particles = true; state.glow = false;
+    state.showOwns = true; state.showDerived = true;
+    state.highlighted = null;
+    state.highlightNodes.clear(); state.highlightLinks.clear();
+    document.getElementById('node-info').style.display = 'none';
+    document.getElementById('depth-wrap').style.display = 'none';
+    refreshGraph();
+  });
+
+  document.getElementById('btn-reset-view').addEventListener('click', () => {
+    Graph.cameraPosition({x: 0, y: 0, z: 400}, {x: 0, y: 0, z: 0}, 1000);
+  });
+
+  // --- Initial render ---
+  refreshGraph();
+
+}).catch(err => {
+  document.getElementById('stat-line').textContent = 'Error loading graph.json: ' + err.message;
+  console.error(err);
+});
+</script>
+</body>
+</html>
