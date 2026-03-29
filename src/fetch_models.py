@@ -42,7 +42,7 @@ def fetch_org_models(org: str) -> list[dict]:
             "tags": tags,
             "base_models": base_models,
             "author": m.get("author", org),
-            "lastModified": m.get("lastModified", ""),
+            "createdAt": m.get("createdAt", ""),
         })
     return models
 

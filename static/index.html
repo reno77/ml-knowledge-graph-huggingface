@@ -172,6 +172,36 @@
     .btn-secondary { background: #21262d; color: #c9d1d9; }
     .btn-secondary:hover { background: #30363d; }
 
+    /* Rotation gizmo */
+    #rotation-gizmo {
+      position: fixed; bottom: 60px; right: 270px; z-index: 100; transition: right 0.3s;
+    }
+    #rotation-gizmo.panel-hidden { right: 16px; }
+    #rotation-gizmo .gizmo-ring {
+      width: 80px; height: 80px; border-radius: 50%;
+      border: 2px solid #30363d; background: rgba(22,27,34,0.92);
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    #rotation-gizmo .gizmo-btn {
+      position: absolute; width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid; font-size: 10px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s, box-shadow 0.15s; background: #161b22;
+    }
+    #rotation-gizmo .gizmo-btn:hover { transform: scale(1.2); box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    #rotation-gizmo .gizmo-btn.active { transform: scale(1.25); box-shadow: 0 0 0 3px rgba(255,210,30,0.3); }
+    #rotation-gizmo .gx { top: -11px; left: 50%; margin-left: -11px; border-color: #e44; color: #e44; }
+    #rotation-gizmo .gy { right: -11px; top: 50%; margin-top: -11px; border-color: #4a4; color: #4a4; }
+    #rotation-gizmo .gz { bottom: -11px; left: 50%; margin-left: -11px; border-color: #46e; color: #46e; }
+    #rotation-gizmo .gfree {
+      position: relative; width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid #8b949e; color: #8b949e; font-size: 8px; font-weight: 700;
+      cursor: pointer; background: #161b22;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #rotation-gizmo .gfree:hover { background: #21262d; }
+    #rotation-gizmo .gfree.active { border-color: #FFD21E; color: #FFD21E; background: rgba(255,210,30,0.1); }
+
     /* Depth slider in node info */
     #depth-wrap {
       margin-top: 10px; border-top: 1px solid #30363d; padding-top: 10px; display: none;
@@ -310,6 +340,14 @@
 
 <div id="panel-toggle" title="Toggle panel">&#9664;</div>
 <div id="hint">Left drag to rotate &middot; Scroll to zoom<br>Right drag to pan &middot; Click node to inspect</div>
+<div id="rotation-gizmo">
+  <div class="gizmo-ring">
+    <div class="gizmo-btn gx" data-axis="x" title="View along X axis">X</div>
+    <div class="gizmo-btn gy" data-axis="y" title="View along Y axis">Y</div>
+    <div class="gizmo-btn gz" data-axis="z" title="View along Z axis">Z</div>
+    <div class="gfree active" data-axis="free" title="Free rotation">Free</div>
+  </div>
+</div>
 <div id="graph"></div>
 
 <script>
@@ -338,7 +376,7 @@ fetch('graph.json').then(r => r.json()).then(data => {
     ...n,
     downloads: n.downloads || 0,
     likes: n.likes || 0,
-    lastModified: n.lastModified || '',
+    createdAt: n.createdAt || '',
   }));
   const allLinks = data.edges.map(e => ({ source: e.source, target: e.target, edgeType: e.type }));
 
@@ -680,8 +718,8 @@ fetch('graph.json').then(r => r.json()).then(data => {
       dlEl.style.display = 'block';
       likesEl.textContent = 'Likes: ' + fmtNum(node.likes);
       likesEl.style.display = 'block';
-      modEl.textContent = node.lastModified ? ('Modified: ' + node.lastModified) : '';
-      modEl.style.display = node.lastModified ? 'block' : 'none';
+      modEl.textContent = node.createdAt ? ('Created: ' + node.createdAt.slice(0, 10)) : '';
+      modEl.style.display = node.createdAt ? 'block' : 'none';
       const author = node.id.split('/')[0];
       authEl.textContent = 'Author: ' + author;
       authEl.style.display = 'block';
@@ -897,27 +935,43 @@ fetch('graph.json').then(r => r.json()).then(data => {
   const TL_DISPLAY = 2000;
   const TL_NOW = new Date().getFullYear();
 
-  // Parse dates from lastModified
+  // Parse dates from createdAt — returns fractional year (e.g. 2024.5 = July 2024)
   function getNodeYear(n) {
-    if (!n.lastModified) return 2024;
-    const d = new Date(n.lastModified);
-    return isNaN(d.getTime()) ? 2024 : d.getFullYear() + d.getMonth() / 12;
+    if (!n.createdAt) return 2024.0;
+    const d = new Date(n.createdAt);
+    if (isNaN(d.getTime())) return 2024.0;
+    return d.getFullYear() + d.getMonth() / 12 + d.getDate() / 365;
   }
 
-  // Find year range
-  const allYears = allNodes.filter(n => n.type === 'model' && n.lastModified)
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fracYearLabel(fy) {
+    const y = Math.floor(fy);
+    const m = Math.round((fy - y) * 12);
+    return m > 0 && m < 12 ? `${MONTH_NAMES[m]} ${y}` : String(y);
+  }
+
+  // Find date range from data
+  const allYears = allNodes.filter(n => n.type === 'model' && n.createdAt)
     .map(n => getNodeYear(n));
-  const minYear = allYears.length ? Math.floor(Math.min(...allYears)) : 2020;
-  const maxYear = TL_NOW;
+  const minYear = allYears.length ? Math.floor(Math.min(...allYears) * 12) / 12 : 2020;
+  const maxYear = TL_NOW + 0.5;
   let tlStartYear = minYear, tlEndYear = maxYear;
 
-  // Setup sliders
+  // Setup sliders — use month granularity (step = 1/12)
   const tlStartSlider = document.getElementById('tl-start');
   const tlEndSlider = document.getElementById('tl-end');
   const tlRangeLabel = document.getElementById('tl-range-label');
-  tlStartSlider.min = minYear; tlStartSlider.max = maxYear; tlStartSlider.value = minYear;
-  tlEndSlider.min = minYear; tlEndSlider.max = maxYear; tlEndSlider.value = maxYear;
-  tlRangeLabel.textContent = `${minYear} – ${maxYear}`;
+  // Multiply by 12 for month-level steps
+  tlStartSlider.min = Math.floor(minYear * 12);
+  tlStartSlider.max = Math.ceil(maxYear * 12);
+  tlStartSlider.value = Math.floor(minYear * 12);
+  tlStartSlider.step = 1;
+  tlEndSlider.min = Math.floor(minYear * 12);
+  tlEndSlider.max = Math.ceil(maxYear * 12);
+  tlEndSlider.value = Math.ceil(maxYear * 12);
+  tlEndSlider.step = 1;
+  tlRangeLabel.textContent = `${fracYearLabel(minYear)} – ${fracYearLabel(maxYear)}`;
 
   function yearToX(year) {
     const range = tlEndYear - tlStartYear || 1;
@@ -978,24 +1032,29 @@ fetch('graph.json').then(r => r.json()).then(data => {
     ]);
     group.add(new THREE.Line(arrGeo, new THREE.LineBasicMaterial({color: 0xFFD21E, opacity: 0.5, transparent: true})));
 
-    // Ticks
+    // Ticks — adaptive granularity
     const span = tlEndYear - tlStartYear;
-    const step = span <= 2 ? 0.25 : span <= 5 ? 0.5 : 1;
-    for (let y = Math.ceil(tlStartYear); y <= tlEndYear; y += step) {
+    // Monthly ticks when zoomed < 3 years, quarterly < 6, yearly otherwise
+    const step = span <= 1.5 ? 1/12 : span <= 3 ? 1/4 : span <= 6 ? 1/2 : 1;
+    const firstTick = Math.ceil(tlStartYear / step) * step;
+    for (let y = firstTick; y <= tlEndYear + 0.001; y += step) {
       const x = yearToX(y);
-      const isWhole = Math.abs(y - Math.round(y)) < 0.01;
-      const tickH = isWhole ? 12 : 6;
+      const isYear = Math.abs(y - Math.round(y)) < 0.02;
+      const tickH = isYear ? 14 : 7;
       const tGeo = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(x, AY, AZ), new THREE.Vector3(x, AY + tickH, AZ)
       ]);
       group.add(new THREE.Line(tGeo, new THREE.LineBasicMaterial({color: 0xFFD21E, opacity: 0.4, transparent: true})));
 
-      if (isWhole) {
-        const sp = new SpriteText(String(Math.round(y)));
-        sp.color = '#FFD21E';
-        sp.textHeight = 4;
+      // Show label
+      const showLabel = isYear || span <= 3;
+      if (showLabel) {
+        const label = isYear ? String(Math.round(y)) : fracYearLabel(y);
+        const sp = new SpriteText(label);
+        sp.color = isYear ? '#FFD21E' : '#8b949e';
+        sp.textHeight = isYear ? 4.5 : 3;
         sp.fontFace = 'Segoe UI, sans-serif';
-        sp.fontWeight = '600';
+        sp.fontWeight = isYear ? '700' : '400';
         sp.position.set(x, AY + tickH + 6, AZ);
         sp.material.depthTest = false;
         sp.renderOrder = 100;
@@ -1044,18 +1103,47 @@ fetch('graph.json').then(r => r.json()).then(data => {
   document.getElementById('btn-force').addEventListener('click', () => setLayout('force'));
   document.getElementById('btn-timeline').addEventListener('click', () => setLayout('timeline'));
 
+  function applyTimelineRange() {
+    if (currentLayout !== 'timeline') return;
+    tlRangeLabel.textContent = `${fracYearLabel(tlStartYear)} – ${fracYearLabel(tlEndYear)}`;
+    pinTimelineNodes(); refreshGraph(); showTimelineAxis(); Graph.d3ReheatSimulation();
+  }
   tlStartSlider.addEventListener('input', () => {
-    tlStartYear = parseInt(tlStartSlider.value);
-    if (tlStartYear >= tlEndYear) { tlStartYear = tlEndYear - 1; tlStartSlider.value = tlStartYear; }
-    tlRangeLabel.textContent = `${tlStartYear} – ${tlEndYear}`;
-    if (currentLayout === 'timeline') { pinTimelineNodes(); refreshGraph(); showTimelineAxis(); Graph.d3ReheatSimulation(); }
+    tlStartYear = parseInt(tlStartSlider.value) / 12;
+    if (tlStartYear >= tlEndYear) { tlStartYear = tlEndYear - 1/12; tlStartSlider.value = Math.floor(tlStartYear * 12); }
+    applyTimelineRange();
   });
   tlEndSlider.addEventListener('input', () => {
-    tlEndYear = parseInt(tlEndSlider.value);
-    if (tlEndYear <= tlStartYear) { tlEndYear = tlStartYear + 1; tlEndSlider.value = tlEndYear; }
-    tlRangeLabel.textContent = `${tlStartYear} – ${tlEndYear}`;
-    if (currentLayout === 'timeline') { pinTimelineNodes(); refreshGraph(); showTimelineAxis(); Graph.d3ReheatSimulation(); }
+    tlEndYear = parseInt(tlEndSlider.value) / 12;
+    if (tlEndYear <= tlStartYear) { tlEndYear = tlStartYear + 1/12; tlEndSlider.value = Math.ceil(tlEndYear * 12); }
+    applyTimelineRange();
   });
+
+  // --- Rotation gizmo ---
+  (function initRotationGizmo() {
+    const gizmo = document.getElementById('rotation-gizmo');
+    const btns = gizmo.querySelectorAll('[data-axis]');
+    let activeAxis = 'free';
+    function setActive(axis) {
+      activeAxis = axis;
+      btns.forEach(b => b.classList.toggle('active', b.dataset.axis === axis));
+      if (axis === 'free') return;
+      const cam = Graph.camera();
+      const dist = cam.position.length() || 1500;
+      cam.up.set(0, 1, 0);
+      if (axis === 'x') {
+        Graph.cameraPosition({x: dist, y: 0, z: 0}, {x: 0, y: 0, z: 0}, 600);
+      } else if (axis === 'y') {
+        cam.up.set(0, 0, -1);
+        Graph.cameraPosition({x: 0, y: dist, z: 0}, {x: 0, y: 0, z: 0}, 600);
+      } else {
+        Graph.cameraPosition({x: 0, y: 0, z: dist}, {x: 0, y: 0, z: 0}, 600);
+      }
+    }
+    btns.forEach(b => b.addEventListener('click', () => {
+      setActive(b.dataset.axis === activeAxis ? 'free' : b.dataset.axis);
+    }));
+  })();
 
   // --- Initial render ---
   refreshGraph();

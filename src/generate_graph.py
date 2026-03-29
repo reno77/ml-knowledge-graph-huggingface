@@ -77,7 +77,7 @@ def build_graph(models: list[dict]) -> dict:
             "val": val,
             "downloads": m["downloads"],
             "likes": m["likes"],
-            "lastModified": m["lastModified"],
+            "createdAt": m.get("createdAt", ""),
             "author": m["author"],
             "pipeline_tag": pipeline,
         })
