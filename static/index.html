@@ -1102,6 +1102,8 @@ fetch('graph.json').then(r => r.json()).then(data => {
     }
   }
 
+  let typeLabelsGroup = null;
+
   function pinTypeNodes() {
     // Group by pipeline_tag — each pipeline gets a cluster position
     const pipeList = sortedPipelines.map(([cat]) => cat);
@@ -1111,7 +1113,6 @@ fetch('graph.json').then(r => r.json()).then(data => {
     allNodes.forEach(n => {
       const h = strHash(n.id);
       if (n.type === 'org') {
-        // Hide orgs off to the side
         n.fx = -300;
         n.fy = (((h & 0xff) / 255) - 0.5) * 400;
         n.fz = (((h >> 8 & 0xff) / 255) - 0.5) * 400;
@@ -1121,12 +1122,64 @@ fetch('graph.json').then(r => r.json()).then(data => {
         const ci = idx >= 0 ? idx : pipeList.length;
         const col = ci % cols;
         const row = Math.floor(ci / cols);
-        // Cluster center + jitter
         n.fx = col * spacing + (((h & 0xff) / 255) - 0.5) * 120;
         n.fy = -row * spacing + (((h >> 8 & 0xff) / 255) - 0.5) * 120;
         n.fz = (((h >> 16 & 0xff) / 255) - 0.5) * 120;
       }
     });
+  }
+
+  function showTypeLabels() {
+    hideTypeLabels();
+    const group = new THREE.Group();
+    const pipeList = sortedPipelines.map(([cat]) => cat);
+    const cols = Math.ceil(Math.sqrt(pipeList.length));
+    const spacing = 200;
+
+    pipeList.forEach((cat, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = col * spacing;
+      const y = -row * spacing + 80;
+
+      const sp = new SpriteText(cat);
+      sp.color = pipelineColors[cat] || '#FFD21E';
+      sp.textHeight = 6;
+      sp.fontFace = 'Segoe UI, sans-serif';
+      sp.fontWeight = '700';
+      sp.backgroundColor = 'rgba(13,17,23,0.85)';
+      sp.padding = 2;
+      sp.borderRadius = 4;
+      sp.position.set(x, y, 0);
+      sp.material.depthTest = false;
+      sp.renderOrder = 999;
+      group.add(sp);
+
+      // Count label
+      const count = sortedPipelines[i][1];
+      const countSp = new SpriteText(`(${count})`);
+      countSp.color = '#8b949e';
+      countSp.textHeight = 3.5;
+      countSp.fontFace = 'Segoe UI, sans-serif';
+      countSp.position.set(x, y - 8, 0);
+      countSp.material.depthTest = false;
+      countSp.renderOrder = 999;
+      group.add(countSp);
+    });
+
+    typeLabelsGroup = group;
+    Graph.scene().add(typeLabelsGroup);
+  }
+
+  function hideTypeLabels() {
+    if (typeLabelsGroup) {
+      Graph.scene().remove(typeLabelsGroup);
+      typeLabelsGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) { if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); }
+      });
+      typeLabelsGroup = null;
+    }
   }
 
   function setLayout(mode) {
@@ -1139,6 +1192,7 @@ fetch('graph.json').then(r => r.json()).then(data => {
     if (mode === 'timeline') {
       pinTimelineNodes();
       Graph.enableNodeDrag(false);
+      hideTypeLabels();
       refreshGraph();
       showTimelineAxis();
       Graph.d3ReheatSimulation();
@@ -1147,11 +1201,13 @@ fetch('graph.json').then(r => r.json()).then(data => {
       Graph.enableNodeDrag(false);
       hideTimelineAxis();
       refreshGraph();
+      showTypeLabels();
       Graph.d3ReheatSimulation();
     } else {
       unpinNodes();
       Graph.enableNodeDrag(true);
       hideTimelineAxis();
+      hideTypeLabels();
       refreshGraph();
       Graph.d3ReheatSimulation();
     }
