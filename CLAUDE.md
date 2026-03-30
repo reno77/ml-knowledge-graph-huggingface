@@ -92,3 +92,11 @@ npx vercel --prod --yes
 ## No test suite, CI, or requirements.txt lock
 
 Dependencies are listed above per task. `src/raw_models.json` is gitignored.
+
+## HF Token
+
+Set `HF_TOKEN` environment variable when running fetch_models.py to avoid rate limits and access gated models:
+
+```bash
+HF_TOKEN=hf_xxx python3 src/fetch_models.py
+```

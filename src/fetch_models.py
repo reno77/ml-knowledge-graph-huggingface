@@ -2,6 +2,7 @@
 """Fetch top models from HuggingFace API for each target organization."""
 
 import json
+import os
 import time
 import sys
 from pathlib import Path
@@ -56,23 +57,43 @@ def infer_pipeline_from_tags(tags: list[str]) -> str:
 
 def fetch_model_detail(model_id: str, session: requests.Session) -> dict:
     """Fetch individual model detail to get pipeline_tag and description."""
+    result = {"pipeline_tag": "", "tags": [], "description": ""}
     try:
+        # Fetch model metadata
         resp = session.get(f"{HF_API_BASE}/{model_id}", timeout=15)
         if resp.ok:
             data = resp.json()
-            # Extract description from cardData or model card
-            desc = ""
-            card_data = data.get("cardData", {})
-            if isinstance(card_data, dict):
-                desc = card_data.get("description", "") or card_data.get("summary", "")
-            return {
-                "pipeline_tag": data.get("pipeline_tag", ""),
-                "tags": data.get("tags", []),
-                "description": desc,
-            }
+            result["pipeline_tag"] = data.get("pipeline_tag", "")
+            result["tags"] = data.get("tags", [])
+
+        # Fetch README for description
+        readme_resp = session.get(
+            f"https://huggingface.co/{model_id}/raw/main/README.md", timeout=15
+        )
+        if readme_resp.ok and readme_resp.text:
+            import re
+            text = re.sub(r'^---.*?---\s*', '', readme_resp.text, flags=re.DOTALL)
+            paras = [
+                p.strip() for p in text.split('\n\n')
+                if p.strip()
+                and not p.strip().startswith('#')
+                and not p.strip().startswith('|')
+                and not p.strip().startswith('<')
+                and not p.strip().startswith('![')
+                and not p.strip().startswith('```')
+                and not p.strip().startswith('*')
+                and not p.strip().lower().startswith('disclaimer')
+                and not 'restricted' in p.lower()
+                and not 'unauthorized' in p.lower()
+                and len(p.strip()) > 40
+            ]
+            if paras:
+                # Clean markdown links: [text](url) -> text
+                desc = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', paras[0])
+                result["description"] = desc[:500]
     except Exception:
         pass
-    return {}
+    return result
 
 
 def fetch_org_models(org: str, session: requests.Session) -> list[dict]:
@@ -110,7 +131,12 @@ def fetch_org_models(org: str, session: requests.Session) -> list[dict]:
 
 def main():
     session = requests.Session()
-    session.headers.update({"User-Agent": "ml-knowledge-graph/1.0"})
+    hf_token = os.environ.get("HF_TOKEN", "")
+    headers = {"User-Agent": "ml-knowledge-graph/1.0"}
+    if hf_token:
+        headers["Authorization"] = f"Bearer {hf_token}"
+        print(f"Using HF_TOKEN: {hf_token[:8]}...")
+    session.headers.update(headers)
 
     all_models = []
     total = len(TARGET_ORGS)
