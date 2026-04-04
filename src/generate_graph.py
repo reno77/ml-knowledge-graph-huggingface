@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """Generate static/graph.json from raw_models.json."""
 
 import json

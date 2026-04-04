@@ -51,7 +51,7 @@ TARGET_ORGS = [
     "Tongyi-MAI",           # Tongyi (Alibaba) — MAI models
 ]
 
-MAX_MODELS_PER_ORG = 30
+MAX_MODELS_PER_ORG = 50
 
 ORG_COLOR = "#1a6985"
 

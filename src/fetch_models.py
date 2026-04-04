@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """Fetch top models from HuggingFace API for each target organization."""
 
 import json
@@ -29,7 +30,7 @@ KNOWN_PIPELINES = {
 }
 
 
-def infer_pipeline_from_tags(tags: list[str]) -> str:
+def infer_pipeline_from_tags(tags: list) -> str:
     """Infer pipeline_tag from the tags array if not explicitly set."""
     for tag in tags:
         if tag in KNOWN_PIPELINES:
@@ -96,7 +97,7 @@ def fetch_model_detail(model_id: str, session: requests.Session) -> dict:
     return result
 
 
-def fetch_org_models(org: str, session: requests.Session) -> list[dict]:
+def fetch_org_models(org: str, session: requests.Session) -> list:
     """Fetch top models for a single org, sorted by downloads."""
     params = {
         "author": org,
